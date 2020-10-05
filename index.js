@@ -1,4 +1,6 @@
 const express = require('express')
+const MongoClient = require('mongodb').MongoClient;
+require('dotenv').config()
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const port = 4000
@@ -11,25 +13,26 @@ app.use(bodyParser.json());
 const pass = "Volunteer2020";
 
 
-const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://volunteer:Volunteer2020@cluster0.ym542.mongodb.net/volunteer-network?retryWrites=true&w=majority";
+
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ym542.mongodb.net/${process.env.DB_Name}?retryWrites=true&w=majority`;
+
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
-  const bookings = client.db("volunteer-network").collection("registration");
+  const bookingsCollection = client.db("volunteer-network").collection("registration");
 
 
  app.post('/register', (req, res) => {
      const newRegistration = req.body;
-     bookings.insertOne(newRegistration)
+     bookingsCollection.insertOne(newRegistration)
      .then(result => {
-        res.send(result.insertedCount > 0);
+        res.send(result.insertedCount);
      })
      console.log(newRegistration);
  })
 
 
-app.get('/bookings', (req, res) => {
-  bookings.find({email: req.query.email})
+app.get('/events', (req, res) => {
+  bookingsCollection.find({email: req.query.email})
   .toArray((err, documents) => {
     res.send(documents);
   })
@@ -37,8 +40,9 @@ app.get('/bookings', (req, res) => {
 
 });
 
+
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-app.listen(port);
+app.listen(process.env.PORT|| port);
